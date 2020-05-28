@@ -16,8 +16,8 @@
   },
   "require": {
     "php": "^7.4",
-    "zoilomora/elastic-apm-agent-php": "^0.1.9",
-    "symfony/messenger": "^4.4|^5.0"
+    "symfony/messenger": "^4.4|^5.0",
+    "zoilomora/elastic-apm-agent-php": "^0.1"
   },
   "require-dev": {
     "pccomponentes/coding-standard": "^1.0"
