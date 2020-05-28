@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Pcc\ApiLegacyBridge\Util\ElasticAPM\Messenger;
+namespace PcComponentes\ElasticAPM\Symfony\Component\Messenger;
 
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Middleware\MiddlewareInterface;

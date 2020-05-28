@@ -14,15 +14,51 @@ This library supports Span traces of [Symfony Messenger](https://github.com/symf
 
 In all cases, an already created instance of [ElasticApmTracer](https://github.com/zoilomora/elastic-apm-agent-php) is assumed.
 
+### Native PHP
+
+```php
+<?php
+declare(strict_types=1);
+
+class TextNameExtractor implements PcComponentes\ElasticAPM\Symfony\Component\Messenger\NameExtractor
+{
+    public function execute($message): string
+    {
+        if (false === is_string($message)) {
+            throw new InvalidArgumentException('The parameter must be of type string');
+        }
+
+        return $message;
+    }
+}
+
+$apmMiddleware = new PcComponentes\ElasticAPM\Symfony\Component\Messenger\ApmMiddleware(
+    $apmTracer, /** \ZoiloMora\ElasticAPM\ElasticApmTracer instance. */
+    new TextNameExtractor(),
+);
+
+$bus = new Symfony\Component\Messenger\MessageBus([
+    $apmMiddleware
+]);
+```
+
 ### Service Container (Symfony)
 
 ```yaml
-PcComponentes\ElasticAPM\Symfony\Component\HttpKernel\EventSubscriber:
-  class: PcComponentes\ElasticAPM\Symfony\Component\HttpKernel\EventSubscriber
-  autoconfigure: true
+app.bus:
+  class: Symfony\Component\Messenger\MessageBus
   arguments:
-    $router: '@router'
+    $middlewareHandlers:
+      - '@app.bus.middleware.apm'
+
+app.bus.middleware.apm:
+  class: PcComponentes\ElasticAPM\Symfony\Component\Messenger\ApmMiddleware
+  arguments:
     $elasticApmTracer: '@apm.tracer' # \ZoiloMora\ElasticAPM\ElasticApmTracer instance.
+    $nameExtractor: '@app.bus.middleware.apm.name_extractor'
+
+app.bus.middleware.apm.name_extractor:
+  class: ExampleTextNameExtractor
 ```
 
 ## License
