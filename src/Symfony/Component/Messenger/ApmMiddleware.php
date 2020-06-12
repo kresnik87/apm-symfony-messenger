@@ -25,18 +25,28 @@ final class ApmMiddleware implements MiddlewareInterface
 
     public function handle(Envelope $envelope, StackInterface $stack): Envelope
     {
+        if (false === $this->elasticApmTracer->active()) {
+            return $stack->next()->handle($envelope, $stack);
+        }
+
         $name = $this->nameExtractor->execute(
             $envelope->getMessage()
         );
 
-        $span = $this->elasticApmTracer->startSpan(
-            $name,
-            'message',
-            null,
-            null,
-            null,
-            self::STACKTRACE_SKIP
-        );
+        $span = null;
+
+        try {
+            $span = $this->elasticApmTracer->startSpan(
+                $name,
+                'message',
+                null,
+                null,
+                null,
+                self::STACKTRACE_SKIP
+            );
+        } catch (\Throwable $exception) {
+            //nothing
+        }
 
         $transaction = $this->elasticApmTracer->startTransaction(
             $name,
@@ -47,12 +57,16 @@ final class ApmMiddleware implements MiddlewareInterface
             $envelope = $stack->next()->handle($envelope, $stack);
 
             $transaction->stop('OK');
-            $span->stop();
+            if (null !== $span) {
+                $span->stop();
+            }
         } catch (\Throwable $throwable) {
             $this->elasticApmTracer->captureException($throwable);
 
             $transaction->stop('KO');
-            $span->stop();
+            if (null !== $span) {
+                $span->stop();
+            }
 
             throw $throwable;
         }
